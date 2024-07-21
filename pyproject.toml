@@ -1,0 +1,31 @@
+[tool.black]
+line-length = 88
+target-version = ['py37', 'py38', 'py39', 'py310']  # Ajusta a las versiones de Python que uses.
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.ven3100
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+skip = [
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".ven3100",
+    "_build",
+    "buck-out",
+    "build",
+    "dist"
+]
