@@ -73,12 +73,14 @@ class VehicleUpdateDTO(BaseModel):
     color: Optional[str] = Field(None, min_length=1, strip_whitespace=True)
     owner_id: Optional[int] = None
 
+
 class VehicleResponseDTO(BaseModel):
     license_plate: Optional[str] = Field(None, min_length=1, strip_whitespace=True)
     make: Optional[str] = Field(None, min_length=1, strip_whitespace=True)
     model: Optional[str] = Field(None, min_length=1, strip_whitespace=True)
     color: Optional[str] = Field(None, min_length=1, strip_whitespace=True)
     owner_id: Optional[int] = None
+
 
 ########################################
 #               Services               #
@@ -188,13 +190,13 @@ def get_vehicle(vehicle_id: int) -> Optional[VehicleResponseDTO]:
     if not vehicle:
         app_logger.info(f"Attempted to retrieve non-existent vehicle ID: {vehicle_id}")
         raise VehicleNotFoundError(vehicle_id=vehicle_id)
-    
+
     vehicle_dto = VehicleResponseDTO(
         license_plate=vehicle.license_plate,
         make=vehicle.make,
         model=vehicle.model,
         color=vehicle.color,
-        owner_id=vehicle.owner_id
+        owner_id=vehicle.owner_id,
     )
     return vehicle_dto
 

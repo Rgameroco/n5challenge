@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.exc import SQLAlchemyError
-from typing import Optional
+from typing import Optional, List
 
 from app.domain.users.models import Person
 from app.extensions import db
@@ -57,6 +57,21 @@ class PersonDTO(BaseModel):
     email: EmailStr
 
 
+class VehicleResponseDTO(BaseModel):
+    license_plate: str = Field(..., description="The vehicle's license plate.")
+    make: str = Field(..., description="The make of the vehicle.")
+    model: str = Field(..., description="The model of the vehicle.")
+    color: str = Field(..., description="The color of the vehicle.")
+
+
+class PersonResponseDTO(BaseModel):
+    name: str = Field(..., description="The full name of the person.")
+    email: EmailStr = Field(..., description="The email address of the person.")
+    vehicles: List[VehicleResponseDTO] = Field(
+        default=[], description="List of vehicles associated with the person."
+    )
+
+
 ########################################
 #               Services               #
 ########################################
@@ -110,3 +125,28 @@ def delete_person(person_id: int) -> bool:
     except SQLAlchemyError as e:
         app_logger.error(f"Error deleting person with ID {person_id}: {e}")
         raise PersonDeletionError(person_id)
+
+
+def get_person_by_email(email: str) -> Optional[PersonResponseDTO]:
+    """
+    Retrieves a person by their email address and returns detailed information including vehicles.
+
+    Args:
+        email (str): The email address to search for.
+
+    Returns:
+        Optional[PersonDTO]: Detailed information about the person if found, None otherwise.
+    """
+    person = Person.query.filter_by(email=email).first()
+    if person:
+        vehicles = [
+            VehicleResponseDTO(
+                license_plate=v.license_plate, make=v.make, model=v.model, color=v.color
+            )
+            for v in person.vehicles
+        ]
+        person_dto = PersonResponseDTO(name=person.name, email=person.email, vehicles=vehicles)
+        return person_dto
+    else:
+        app_logger.warning(f"No person found with email: {email}")
+    return None

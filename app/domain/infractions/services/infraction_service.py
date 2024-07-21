@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.domain.infractions.adapters.person_adapter import BasePersonAdapter
 from app.domain.infractions.adapters.vehicle_adapter import BaseVehicleAdapter
 from app.domain.infractions.adapters.officer_adapter import BaseOfficerAdapter
 from app.domain.infractions.models import Infraction
@@ -60,8 +61,8 @@ class InfractionDTO(BaseModel):
     timestamp: datetime
     comments: Optional[str] = Field(alias="comentarios")
     officer_unique_identifier: str
-    
-    @field_validator('timestamp')
+
+    @field_validator("timestamp")
     def validate_timestamp(cls, value):
         today = datetime.now().date()
         if value.date() != today:
@@ -193,3 +194,56 @@ def delete_infraction(infraction_id: int) -> bool:
     except Exception as e:
         app_logger.error(f"Failed to delete infraction: ID {infraction_id}, Error: {e}")
         raise InfractionDeletionError(infraction_id, str(e))
+
+
+def generate_report(email: str, person_adapter: BasePersonAdapter) -> Dict[str, Any]:
+    """
+    Generates a report of all infractions for vehicles owned by the person with the given email.
+
+    Args:
+        email (str): Email address of the person to retrieve infractions for.
+        person_adapter (BasePersonAdapter): Adapter to retrieve person and vehicle data.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the person's details and a list of their infractions.
+    """
+    try:
+        person = person_adapter.get_person_by_email(email)
+        if not person:
+            app_logger.error(f"No person found with email: {email}")
+            return {"error": "No person found with this email."}
+
+        infractions = []
+        for vehicle in person.vehicles:
+            vehicle_infractions = Infraction.query.filter_by(
+                license_plate=vehicle.license_plate
+            ).all()
+            for infraction in vehicle_infractions:
+                infractions.append(
+                    {
+                        "license_plate": vehicle.license_plate,
+                        "timestamp": infraction.timestamp,
+                        "comments": infraction.comments,
+                    }
+                )
+
+        if not infractions:
+            app_logger.info(
+                f"No infractions found for vehicles owned by the person with email: {email}"
+            )
+            return {"message": "No infractions found for this person's vehicles."}
+
+        report = {
+            "person": {
+                "name": person.name,
+                "email": person.email,
+            },
+            "infractions": infractions,
+        }
+
+        app_logger.info(f"Report generated for person with email: {email}")
+        return report
+
+    except Exception as e:
+        app_logger.error(f"Failed to generate report for email {email}: {e}")
+        return {"error": "Failed to generate report due to an internal error."}

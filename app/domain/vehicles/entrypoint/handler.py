@@ -9,7 +9,7 @@ from app.domain.vehicles.services.vehicle_service import (
     delete_vehicle,
     get_vehicle,
     update_vehicle,
-    VehicleNotFoundError
+    VehicleNotFoundError,
 )
 
 vehicle_blueprint = Blueprint("vehicles", __name__)
@@ -27,15 +27,19 @@ def add_vehicle():
     except ValidationError as e:
         return handle_api_response(error={"errors": e.errors()}, status_code=400)
 
+
 @vehicle_blueprint.route("/<int:vehicle_id>", methods=["GET"])
 def retrieve_vehicle(vehicle_id):
     try:
         vehicle_dto = get_vehicle(vehicle_id)
-        return handle_api_response(data=vehicle_dto.model_dump())  # Updated to use `model_dump`
+        return handle_api_response(
+            data=vehicle_dto.model_dump()
+        )  # Updated to use `model_dump`
     except VehicleNotFoundError as e:
         return handle_api_response(error={"message": str(e)}, status_code=404)
     except Exception as e:
         return handle_api_response(error={"errors": str(e)}, status_code=500)
+
 
 @vehicle_blueprint.route("/<int:vehicle_id>", methods=["PUT"])
 def modify_vehicle(vehicle_id):

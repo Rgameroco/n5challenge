@@ -5,12 +5,14 @@ from pydantic import ValidationError
 from app.commons.responses import handle_api_response
 from app.domain.infractions.adapters.vehicle_adapter import VehicleAdapter
 from app.domain.infractions.adapters.officer_adapter import OfficerAdapter
+from app.domain.infractions.adapters.person_adapter import PersonAdapter
 from app.domain.infractions.services.infraction_service import (
     InfractionDTO,
     create_infraction,
     delete_infraction,
     get_infraction,
     update_infraction,
+    generate_report,
     InfractionNotFoundError,
     InfractionCreationError,
     InfractionDeletionError,
@@ -76,4 +78,19 @@ def delete_infraction_endpoint(infraction_id):
     except InfractionNotFoundError as e:
         return handle_api_response(error={"message": str(e)}, status_code=404)
     except InfractionDeletionError as e:
+        return handle_api_response(error={"message": str(e)}, status_code=500)
+
+
+@infraction_blueprint.route("/generate_report/<string:email>", methods=["GET"])
+@jwt_required()
+def generate_report_endpoint(email):
+    person_adapter = PersonAdapter()
+    try:
+        report = generate_report(email, person_adapter)
+        if "error" in report:
+            return handle_api_response(
+                error={"message": report["error"]}, status_code=404
+            )
+        return handle_api_response(data=report, status_code=200)
+    except Exception as e:
         return handle_api_response(error={"message": str(e)}, status_code=500)
