@@ -16,6 +16,7 @@ Qué cosas necesitas instalar el software y cómo instalarlas:
         flask db migrate "Initial migrate"
         flask db upgrade
 - Importar la colección de POSTMAN para probar los servicios
+- Para obtener la imagen: docker pull rgameroco70/n5challenge
 
 ## Estructura del Proyecto Flask
 Este proyecto está estructurado siguiendo principios de diseño de software que buscan maximizar la modularidad y mantenibilidad del código. La estructura permite una clara separación de responsabilidades y facilita tanto la escalabilidad como el testing unitario y de integración.
